@@ -2,6 +2,8 @@
 session_start();
 include("../config/db.php");
 
+/* ADD ATTENDANCE */
+
 if(isset($_POST['add']))
 {
     $date = $_POST['date'];
@@ -14,7 +16,7 @@ if(isset($_POST['add']))
             VALUES
             ('$date','$usn','$courseid','$status')";
 
-    mysqli_query($conn, $sql);
+    mysqli_query($conn,$sql);
 }
 ?>
 
@@ -22,9 +24,9 @@ if(isset($_POST['add']))
 <html>
 <head>
 
-    <title>Attendance Management</title>
+<title>Attendance Management</title>
 
-    <link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/style.css">
 
 </head>
 
@@ -34,137 +36,190 @@ if(isset($_POST['add']))
 
 <div class="content">
 
-    <h2>Attendance Records</h2>
+<h2>View Attendance</h2>
 
-    <table>
+<form method="GET">
 
-        <tr>
+<label>Course</label>
+<br>
+
+<select name="courseid" required>
+
+<option value="">Select Course</option>
+
+<?php
+
+$result = mysqli_query($conn,"SELECT * FROM COURSE");
+
+while($row = mysqli_fetch_assoc($result))
+{
+    echo "<option value='".$row['COURSEID']."'>".$row['COURSENAME']."</option>";
+}
+
+?>
+
+</select>
+
+<br><br>
+
+<label>Date</label>
+<br>
+
+<input type="date" name="date" required>
+
+<br><br>
+
+<input type="submit" name="view" value="View Attendance">
+
+</form>
+
+<hr>
+
+<?php
+
+if(isset($_GET['view']))
+{
+    $courseid = $_GET['courseid'];
+    $date = $_GET['date'];
+
+    echo "<h2>Attendance Records</h2>";
+
+    echo "<table>";
+
+    echo "<tr>
             <th>USN</th>
             <th>Name</th>
             <th>Department</th>
             <th>Course</th>
             <th>Date</th>
             <th>Status</th>
-        </tr>
+          </tr>";
 
-        <?php
+    $sql = "
+    SELECT
+        ATTENDANCE.USN,
+        STUDENT.NAME AS STUDENTNAME,
+        DEPARTMENT.DEPNAME,
+        COURSE.COURSENAME,
+        ATTENDANCE.DATE,
+        ATTENDANCE.STATUS
 
-        $sql = "
-        SELECT
-            ATTENDANCE.USN,
-            STUDENT.NAME AS STUDENTNAME,
-            DEPARTMENT.DEPNAME,
-            COURSE.COURSENAME,
-            ATTENDANCE.DATE,
-            ATTENDANCE.STATUS
-        FROM ATTENDANCE
-        JOIN STUDENT
-            ON ATTENDANCE.USN = STUDENT.USN
-        JOIN DEPARTMENT
-            ON STUDENT.DEPID = DEPARTMENT.DEPID
-        JOIN COURSE
-            ON ATTENDANCE.COURSEID = COURSE.COURSEID
-        ORDER BY ATTENDANCE.DATE DESC
-        ";
+    FROM ATTENDANCE
 
-        $result = mysqli_query($conn, $sql);
+    JOIN STUDENT
+    ON ATTENDANCE.USN = STUDENT.USN
 
-        while($row = mysqli_fetch_assoc($result))
+    JOIN DEPARTMENT
+    ON STUDENT.DEPID = DEPARTMENT.DEPID
+
+    JOIN COURSE
+    ON ATTENDANCE.COURSEID = COURSE.COURSEID
+
+    WHERE ATTENDANCE.COURSEID='$courseid'
+    AND ATTENDANCE.DATE='$date'
+
+    ORDER BY STUDENT.NAME
+    ";
+
+    $result = mysqli_query($conn,$sql);
+
+    while($row = mysqli_fetch_assoc($result))
+    {
+        echo "<tr>";
+
+        echo "<td>".$row['USN']."</td>";
+        echo "<td>".$row['STUDENTNAME']."</td>";
+        echo "<td>".$row['DEPNAME']."</td>";
+        echo "<td>".$row['COURSENAME']."</td>";
+        echo "<td>".$row['DATE']."</td>";
+
+        if($row['STATUS'] == 'Present')
         {
-            echo "<tr>";
-
-            echo "<td>".$row['USN']."</td>";
-            echo "<td>".$row['STUDENTNAME']."</td>";
-            echo "<td>".$row['DEPNAME']."</td>";
-            echo "<td>".$row['COURSENAME']."</td>";
-            echo "<td>".$row['DATE']."</td>";
-
-            if($row['STATUS'] == "Absent")
-            {
-                echo "<td style='color:red;font-weight:bold;'>".$row['STATUS']."</td>";
-            }
-            else
-            {
-                echo "<td style='color:green;font-weight:bold;'>".$row['STATUS']."</td>";
-            }
-
-            echo "</tr>";
+            echo "<td style='color:green;font-weight:bold'>Present</td>";
+        }
+        else
+        {
+            echo "<td style='color:red;font-weight:bold'>Absent</td>";
         }
 
-        ?>
+        echo "</tr>";
+    }
 
-    </table>
+    echo "</table>";
+}
 
-    <h2>Mark Attendance</h2>
+?>
 
-    <form method="POST">
+<hr>
 
-        Date
+<h2>Mark Attendance</h2>
 
-        <br>
+<form method="POST">
 
-        <input type="date" name="date" required>
+<label>Date</label>
+<br>
 
-        <br><br>
+<input type="date" name="date" required>
 
-        Student
+<br><br>
 
-        <br>
+<label>Student</label>
+<br>
 
-        <select name="usn" required>
+<select name="usn" required>
 
-            <?php
+<option value="">Select Student</option>
 
-            $result = mysqli_query($conn, "SELECT * FROM STUDENT");
+<?php
 
-            while($row = mysqli_fetch_assoc($result))
-            {
-                echo "<option value='".$row['USN']."'>".$row['USN']." - ".$row['NAME']."</option>";
-            }
+$result = mysqli_query($conn,"SELECT * FROM STUDENT");
 
-            ?>
+while($row = mysqli_fetch_assoc($result))
+{
+    echo "<option value='".$row['USN']."'>".$row['USN']." - ".$row['NAME']."</option>";
+}
 
-        </select>
+?>
 
-        <br><br>
+</select>
 
-        Course
+<br><br>
 
-        <br>
+<label>Course</label>
+<br>
 
-        <select name="courseid" required>
+<select name="courseid" required>
 
-            <?php
+<option value="">Select Course</option>
 
-            $result = mysqli_query($conn, "SELECT * FROM COURSE");
+<?php
 
-            while($row = mysqli_fetch_assoc($result))
-            {
-                echo "<option value='".$row['COURSEID']."'>".$row['COURSENAME']."</option>";
-            }
+$result = mysqli_query($conn,"SELECT * FROM COURSE");
 
-            ?>
+while($row = mysqli_fetch_assoc($result))
+{
+    echo "<option value='".$row['COURSEID']."'>".$row['COURSENAME']."</option>";
+}
 
-        </select>
+?>
 
-        <br><br>
+</select>
 
-        Status
+<br><br>
 
-        <br>
+<label>Status</label>
+<br>
 
-        <select name="status" required>
-            <option value="Present">Present</option>
-            <option value="Absent">Absent</option>
-        </select>
+<select name="status" required>
+    <option value="Present">Present</option>
+    <option value="Absent">Absent</option>
+</select>
 
-        <br><br>
+<br><br>
 
-        <input type="submit" name="add" value="Save Attendance">
+<input type="submit" name="add" value="Save Attendance">
 
-    </form>
-
-    <hr>
+</form>
 
 </div>
 
